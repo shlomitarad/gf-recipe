@@ -1,123 +1,216 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <title>GF Recipe Converter</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>GF Recipe Converter (Chat)</title>
+
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      max-width: 900px;
-      margin: 40px;
+    :root{
+      --bg:#f6f7fb; --card:#ffffff; --text:#111827; --muted:#6b7280;
+      --border:#e5e7eb; --primary:#2563eb; --danger:#dc2626;
+      --bubble:#eef2ff; --bubble2:#f3f4f6;
+      --radius:18px;
+      --shadow: 0 10px 30px rgba(17,24,39,.08);
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
-    h2 {
-      margin-top: 30px;
-    }
-    .section {
-      margin-bottom: 20px;
-    }
-    button {
-      padding: 10px 18px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    textarea {
-      width: 100%;
-      font-size: 14px;
-    }
-    pre {
-      white-space: pre-wrap;
-      margin-top: 20px;
-      background: #f6f6f6;
-      padding: 16px;
-    }
+    *{box-sizing:border-box}
+    body{margin:0;padding:24px;font-family:var(--sans);background:var(--bg);color:var(--text);}
+    .wrap{max-width:980px;margin:0 auto;}
+    h1{margin:0;font-size:24px}
+    .sub{color:var(--muted);margin-bottom:16px}
+
+    .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);margin-bottom:16px;}
+    .cardHead{padding:16px;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;}
+    .content{padding:16px}
+
+    button{border:0;border-radius:14px;padding:8px 12px;font-weight:600;cursor:pointer;}
+    .btnPrimary{background:var(--primary);color:white;}
+    .btnGhost{background:transparent;border:1px solid var(--border);}
+    .btnDanger{background:var(--danger);color:white;}
+
+    .prefsGrid{display:grid;gap:16px}
+    @media(min-width:860px){.prefsGrid{grid-template-columns:repeat(3,1fr)}}
+
+    .prefRow{display:flex;gap:8px;align-items:center}
+    .chatArea{height:380px;overflow:auto;padding:16px;border-top:1px solid var(--border)}
+    .msg{margin:10px 0;display:flex}
+    .msg.user{justify-content:flex-end}
+    .bubble{padding:12px 14px;border-radius:16px;border:1px solid var(--border);white-space:pre-wrap;max-width:90%}
+    .msg.user .bubble{background:var(--bubble)}
+    .msg.assistant .bubble{background:var(--bubble2)}
+
+    textarea{width:100%;min-height:100px;font-family:var(--mono);padding:10px;border-radius:12px;border:1px solid var(--border)}
+    .status{font-size:12px;color:var(--muted);min-height:16px}
   </style>
 </head>
 
 <body>
+<div class="wrap">
+  <h1>GF Recipe Converter</h1>
+  <div class="sub">Paste a recipe, convert to gluten-free, then ask follow-ups.</div>
 
-<h1>GF Recipe Converter</h1>
+  <!-- Preferences -->
+  <div class="card">
+    <div class="cardHead">
+      <strong>Preferences</strong>
+      <div>
+        <button class="btnGhost" id="resetPrefsBtn">Reset</button>
+        <button class="btnPrimary" id="savePrefsBtn">Save</button>
+      </div>
+    </div>
+    <div class="content prefsGrid">
+      <div>
+        <strong>Style</strong>
+        <div id="prefStyle"></div>
+      </div>
+      <div>
+        <strong>Dietary</strong>
+        <div id="prefDiet"></div>
+      </div>
+      <div>
+        <strong>Skill</strong>
+        <div id="prefSkill"></div>
+      </div>
+    </div>
+  </div>
 
-<!-- SECTION 1 -->
-<div class="section">
-  <h2>1. What do you want your recipe to be?</h2>
+  <!-- Chat -->
+  <div class="card">
+    <div class="cardHead">
+      <strong>Chat</strong>
+      <button class="btnDanger" id="clearChatBtn">Clear</button>
+    </div>
 
-  <label><input type="checkbox" id="pref_easy"> Easy</label><br>
-  <label><input type="checkbox" id="pref_quick"> Quick</label><br>
-  <label><input type="checkbox" id="pref_high_protein"> High-protein</label><br>
-  <label><input type="checkbox" id="pref_light"> Light & fresh</label><br>
-  <label><input type="checkbox" id="pref_budget"> Budget-friendly</label><br>
+    <div class="chatArea" id="chatArea"></div>
+
+    <div class="content">
+      <div class="status" id="status"></div>
+      <textarea id="messageInput" placeholder="Paste a recipe or ask a follow-up..."></textarea>
+      <button class="btnPrimary" id="sendBtn">Send</button>
+    </div>
+  </div>
 </div>
-
-<!-- SECTION 2 -->
-<div class="section">
-  <h2>2. Any dietary restrictions?</h2>
-
-  <label><input type="checkbox" id="pref_vegetarian"> Vegetarian</label><br>
-  <label><input type="checkbox" id="pref_vegan"> Vegan</label><br>
-  <label><input type="checkbox" id="pref_gluten_free"> Gluten-free</label><br>
-  <label><input type="checkbox" id="pref_dairy_free"> Dairy-free</label><br>
-  <label><input type="checkbox" id="pref_nut_free"> Nut-free</label><br>
-</div>
-
-<!-- SECTION 3 -->
-<div class="section">
-  <h2>3. How do you cook?</h2>
-
-  <label><input type="radio" name="skill" value="learning" checked> I’m learning</label><br>
-  <label><input type="radio" name="skill" value="basics"> I can handle basics</label><br>
-  <label><input type="radio" name="skill" value="good"> I’m pretty good</label><br>
-  <label><input type="radio" name="skill" value="challenge"> Bring on the challenge</label>
-</div>
-
-<!-- RECIPE INPUT -->
-<div class="section">
-  <h2>Paste the recipe</h2>
-  <textarea id="recipe" rows="12" placeholder="Paste recipe here"></textarea>
-</div>
-
-<button onclick="convert()">Convert</button>
-
-<pre id="result"></pre>
 
 <script>
-async function convert() {
-  const recipe = document.getElementById("recipe").value;
-  const resultEl = document.getElementById("result");
-  resultEl.textContent = "Converting…";
+const WEBHOOK_URL = "https://vinst.app.n8n.cloud/webhook/gf-chat";
 
-  const preferences = {
-    easy: document.getElementById("pref_easy").checked,
-    quick: document.getElementById("pref_quick").checked,
-    highProtein: document.getElementById("pref_high_protein").checked,
-    lightFresh: document.getElementById("pref_light").checked,
-    budgetFriendly: document.getElementById("pref_budget").checked,
+const PREF_STYLE = ["Easy","Quick","High-protein","Light & fresh","Budget-friendly"];
+const PREF_DIET  = ["Vegetarian","Vegan","Gluten-free","Dairy-free","Nut-free"];
+const PREF_SKILL = [
+  {label:"I'm learning",value:"learning"},
+  {label:"I can handle basics",value:"basics"},
+  {label:"I'm pretty good",value:"good"},
+  {label:"Bring on the challenge",value:"challenge"}
+];
 
-    vegetarian: document.getElementById("pref_vegetarian").checked,
-    vegan: document.getElementById("pref_vegan").checked,
-    glutenFree: document.getElementById("pref_gluten_free").checked,
-    dairyFree: document.getElementById("pref_dairy_free").checked,
-    nutFree: document.getElementById("pref_nut_free").checked,
+const LS_PREFS_KEY="gf_prefs_v1";
+const LS_CHAT_KEY="gf_chat_v1";
 
-    skillLevel: document.querySelector('input[name="skill"]:checked').value
-  };
+const chatArea=document.getElementById("chatArea");
+const msgInput=document.getElementById("messageInput");
+const statusEl=document.getElementById("status");
 
-  try {
-    const response = await fetch("https://vinst.app.n8n.cloud/webhook/gf-chat", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        recipe,
-        preferences
-      })
-    });
+let history=[];
 
-    const text = await response.text();
-    resultEl.textContent = text;
-  } catch (e) {
-    resultEl.textContent = "Something went wrong. Please try again.";
+function setStatus(t){statusEl.textContent=t||"";}
+
+function buildList(el,items,type,name){
+  el.innerHTML="";
+  items.forEach(i=>{
+    const v=i.value||i;
+    const l=i.label||i;
+    el.innerHTML+=`<div class="prefRow">
+      <input type="${type}" name="${name}" value="${v}">
+      <label>${l}</label>
+    </div>`;
+  });
+}
+
+buildList(document.getElementById("prefStyle"),PREF_STYLE,"checkbox","style");
+buildList(document.getElementById("prefDiet"),PREF_DIET,"checkbox","diet");
+buildList(document.getElementById("prefSkill"),PREF_SKILL,"radio","skill");
+
+function getPrefsFromUI(){
+  const selected=[...document.querySelectorAll("input[type=checkbox]:checked")].map(i=>i.value);
+  const skill=document.querySelector("input[name=skill]:checked")?.value||"learning";
+  return {selected,skill};
+}
+
+function savePrefs({silent=false}={}){
+  localStorage.setItem(LS_PREFS_KEY,JSON.stringify(getPrefsFromUI()));
+  if(!silent){
+    setStatus("Preferences saved.");
+    setTimeout(()=>setStatus(""),1200);
   }
 }
-</script>
 
+function append(role,text){
+  const d=document.createElement("div");
+  d.className="msg "+role;
+  d.innerHTML=`<div class="bubble">${text}</div>`;
+  chatArea.appendChild(d);
+  chatArea.scrollTop=chatArea.scrollHeight;
+}
+
+function saveChat(){
+  sessionStorage.setItem(LS_CHAT_KEY,JSON.stringify(history));
+}
+
+function loadChat(){
+  history = JSON.parse(sessionStorage.getItem(LS_CHAT_KEY) || "[]");
+  chatArea.innerHTML = "";
+
+  if(!history.length){
+    const welcome = "Paste a recipe to begin.";
+    append("assistant", welcome);
+    history = [{ role: "assistant", content: welcome }];
+    saveChat();
+    return; // <-- prevents the second append
+  }
+
+  history.forEach(m => append(m.role, m.content));
+}
+
+async function sendMessage(){
+  const text=msgInput.value.trim();
+  if(!text) return;
+
+  savePrefs({silent:true});
+  setStatus("Working...");
+
+  append("user",text);
+  history.push({role:"user",content:text});
+  saveChat();
+  msgInput.value="";
+
+  try{
+    const resp=await fetch(WEBHOOK_URL,{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({
+        message:text,
+        history,
+        preferences:getPrefsFromUI()
+      })
+    });
+   const reply = await resp.text();
+   append("assistant", reply);
+   history.push({ role: "assistant", content: reply });
+    saveChat();
+  }catch(e){
+  append("assistant", "Error: " + (e?.message || String(e)));
+}
+  setStatus("");
+}
+
+document.getElementById("sendBtn").onclick=sendMessage;
+document.getElementById("savePrefsBtn").onclick=()=>savePrefs();
+document.getElementById("resetPrefsBtn").onclick=()=>{localStorage.removeItem(LS_PREFS_KEY);location.reload();}
+document.getElementById("clearChatBtn").onclick=()=>{sessionStorage.removeItem(LS_CHAT_KEY);location.reload();}
+
+loadChat();
+</script>
 </body>
 </html>
